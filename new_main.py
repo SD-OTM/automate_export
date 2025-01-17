@@ -7,7 +7,7 @@ from openpyxl.styles import PatternFill
 import re
 from openpyxl.styles import Border, Side
 import win32com.client
-
+import os
 # Load the Word document
 doc_path = 'Title.docx'
 doc = Document(doc_path)
@@ -16,7 +16,8 @@ title_with_tables = []
 headings = {}
 i = 0
 flag_header = False
-
+# Define a global list to store headings with enumeration
+global_headings = []
 
 # Helper function to process a table and transform it into a 2-row x 8-column format
 def process_table(table):
@@ -123,6 +124,44 @@ for paragraph in doc.paragraphs:
                     })
                     i = i + 1
 
+def extract_headings_with_enumeration(document_path):
+    # Access the global variable
+    global global_headings
+
+    # Check if the file exists
+    if not os.path.exists(document_path):
+        raise FileNotFoundError(f"File not found at: {document_path}")
+
+    # Start the Word application
+    word = win32com.client.Dispatch("Word.Application")
+    word.Visible = False  # Keep Word hidden
+
+    # Open the document
+    docs = word.Documents.Open(document_path)
+
+    # Extract headings and enumeration
+    for paragraph in docs.Paragraphs:
+        if paragraph.Range.Style.NameLocal.startswith("Heading"):
+            # Extract text and numbering
+            text = paragraph.Range.Text.strip()
+            numbering = paragraph.Range.ListFormat.ListString  # Extract enumeration
+            # Save the result as a combined string to the global list
+            global_headings.append(f"{numbering} {text}")
+
+    # Ensure Word and the document are closed properly
+    docs.Close(False)
+    word.Quit()
+
+# Replace with the path to your Word document
+document_path = r"C:\Users\NITRO\PycharmProjects\test\Title.docx"
+
+# Call the function to extract headings
+extract_headings_with_enumeration(document_path)
+
+# Print the global list
+print("Global Headings List:")
+for heading in global_headings:
+    print(heading)
 # Create a DataFrame
 requirements_df = pd.DataFrame(requirements_data)
 
@@ -141,16 +180,19 @@ wb = load_workbook(final_output_path)
 ws = wb.active
 
 ws.delete_rows(1)
-for index, heading in headings.items():
+for (index, heading), title in zip(headings.items(), global_headings):
     ws.merge_cells(start_row=index + 1, start_column=1, end_row=index + 1, end_column=8)
     ws.cell(row=index + 1, column=1).alignment = Alignment(horizontal="center", vertical="center")
 
     cell = ws.cell(row=index + 1, column=1)
     if heading == 'Heading 1':
+        cell.value = title
         cell.fill = PatternFill(start_color="BDD7EE", end_color="BDD7EE", fill_type="solid")
     elif heading == 'Heading 2':
+        cell.value = title
         cell.fill = PatternFill(start_color="F8CBAD", end_color="F8CBAD", fill_type="solid")
     elif heading == 'Heading 3':
+        cell.value = title
         cell.fill = PatternFill(start_color="C6E0B4", end_color="C6E0B4", fill_type="solid")
 
 # Define border style
