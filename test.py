@@ -16,36 +16,30 @@ def extract_headings_with_enumeration(doc_path):
     word = win32com.client.Dispatch("Word.Application")
     word.Visible = False  # Keep Word hidden
 
-    try:
-        # Open the document
-        docs = word.Documents.Open(doc_path)
+    # Open the document
+    docs = word.Documents.Open(doc_path)
 
-        for paragraph in docs.Paragraphs:
-            if paragraph.Range.Style.NameLocal.startswith("Heading"):
-                # Extract text and numbering
-                text = paragraph.Range.Text.strip()
-                numbering = paragraph.Range.ListFormat.ListString  # Extract enumeration
-                # Save the result as a combined string to the global list
-                global_headings.append(f"{numbering} {text}")
+    # Extract headings and enumeration
+    for paragraph in docs.Paragraphs:
+        if paragraph.Range.Style.NameLocal.startswith("Heading"):
+            # Extract text and numbering
+            text = paragraph.Range.Text.strip()
+            numbering = paragraph.Range.ListFormat.ListString  # Extract enumeration
+            # Save the result as a combined string to the global list
+            global_headings.append(f"{numbering} {text}")
 
-    finally:
-        # Ensure Word and the document are closed properly
-        docs.Close(False)
-        word.Quit()
+    # Ensure Word and the document are closed properly
+    docs.Close(False)
+    word.Quit()
 
 
 # Replace with the path to your Word document
 doc_path = r"C:\Users\NITRO\PycharmProjects\test\Title.docx"
 
-try:
-    extract_headings_with_enumeration(doc_path)
+# Call the function to extract headings
+extract_headings_with_enumeration(doc_path)
 
-    # Print the global list
-    print("Global Headings List:")
-    for heading in global_headings:
-        print(heading)
-
-except FileNotFoundError as e:
-    print(e)
-except Exception as e:
-    print(f"An error occurred: {e}")
+# Print the global list
+print("Global Headings List:")
+for heading in global_headings:
+    print(heading)
